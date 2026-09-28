@@ -45,8 +45,23 @@ WSGI server instead, for example `pip install gunicorn` then
 python test_metar.py
 ```
 
-Prints `all tests passed`. The tests use hand-built fixtures and mocks, so
-they need no network.
+Prints `all tests passed (15)` when everything works, or a traceback pointing
+at the failing assertion. No pytest or other test dependency is needed; the
+script runs every `test_*` function in the file.
+
+The tests never touch the network. There are two kinds:
+
+- **Decoding tests** call the functions in `metar.py` directly: unit
+  conversions, compass points, weather codes such as `+TSRA` and `VCTS`,
+  picking the cloud ceiling, and input validation.
+- **Route tests** use Flask's test client against `app.py`, with
+  `fetch_metar` mocked to return hand-built readings shaped like the
+  Aviation Weather Center API response. They check the rendered page for
+  VFR, MVFR, IFR and LIFR conditions, gusts, variable and calm wind,
+  the empty form, and each error message.
+
+To add a case, copy one of the mock readings (for example `MVFR_KJFK` in
+`test_metar.py`), change the values, and assert on the text you expect to see.
 
 ## How it works
 
@@ -55,7 +70,7 @@ they need no network.
 | `metar.py` | Fetches the report and decodes it. No Flask dependency. |
 | `app.py` | One route, `/`, that reads the `code` query parameter. |
 | `templates/index.html` | The page: form, result and inline CSS. |
-| `test_metar.py` | Tests for the decoding logic. |
+| `test_metar.py` | Tests for the decoding logic and the route. |
 
 Values are converted for a US audience: °C to °F, knots to mph, hPa to inHg.
 To decode more weather phenomena, extend the lookup tables at the top of
