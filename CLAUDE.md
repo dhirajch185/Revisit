@@ -24,6 +24,6 @@ Three files carry all logic:
 - **`app.py`** — single `/` route. Reads `code` query param, calls `fetch_metar`/`decode`, catches `MetarError` for user-facing messages and any other exception as a generic "couldn't reach service" fallback.
 - **`templates/index.html`** — single Jinja template, inline CSS, renders the form + result/error.
 
-All units are converted from the API's metric values to US units for display (°C→°F via `c_to_f`, m/s→mph via `*1.15078`, hPa altimeter→inHg via `/33.8639`).
+All units are converted from the API's metric values to US units for display (°C→°F via `c_to_f`, knots→mph via `*1.15078`, hPa altimeter→inHg via `/33.8639`).
 
 `test_metar.py` tests `metar.py` functions directly against hand-built dict fixtures (shaped like aviationweather.gov API responses) — no network calls, no Flask test client.

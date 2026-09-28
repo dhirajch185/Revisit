@@ -1,25 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>METAR Reader</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=B612+Mono&display=swap" rel="stylesheet">
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 560px; margin: 60px auto; padding: 0 16px; color: #222; }
-  h1 { font-size: 1.4rem; }
-  input { font-size: 1rem; padding: 8px; text-transform: uppercase; width: 140px; }
-  button { font-size: 1rem; padding: 8px 16px; }
-  .plain { font-size: 1.2rem; margin: 16px 0; padding: 16px; background: #eef6ff; border-radius: 8px; }
-  .raw { font-family: monospace; color: #666; font-size: 0.85rem; }
-  .error { color: #b00020; }
+  :root {
+    --paper: #e6edf2; --panel: #f4f8fa; --ink: #0f2233; --slate: #4d5f6e; --line: #b9c7d1;
+    --vfr: #2e8b3e; --mvfr: #2f6fde; --ifr: #d0342c; --lifr: #b4239a;
+    --cat: var(--slate);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #0d1a26; --panel: #142534; --ink: #e3ecf2; --slate: #93a6b5; --line: #2b4154;
+            --vfr: #4bb85e; --mvfr: #5b95ff; --ifr: #ff6a5f; --lifr: #e05cc7; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink);
+         font: 1rem/1.55 "B612", system-ui, sans-serif; }
+  main { max-width: 40rem; margin: 0 auto; padding: 3.5rem 1rem 4rem; }
+  h1 { font-size: 1.5rem; margin: 0 0 1.25rem; letter-spacing: -0.01em; }
+
+  form { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; }
+  label { display: block; width: 100%; color: var(--slate); font-size: .9rem; }
+  input, button { font: inherit; padding: .55rem .8rem; border: 1px solid var(--line); border-radius: 4px; }
+  input { width: 9rem; background: var(--panel); color: var(--ink); text-transform: uppercase;
+          font-family: "B612 Mono", ui-monospace, monospace; letter-spacing: .08em; }
+  button { background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 700; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--mvfr); outline-offset: 2px; }
+
+  .error { margin: 1.5rem 0 0; padding-left: .9rem; border-left: 4px solid var(--ifr); }
+
+  .report { margin-top: 2rem; padding: 1.25rem 1.25rem 1.25rem 1.1rem; background: var(--panel);
+            border-left: 8px solid var(--cat); }
+  .report h2 { font-size: 1.05rem; margin: 0; }
+  .report .cat { color: var(--cat); font-weight: 700; }
+  .plain { font-size: 1.15rem; margin: .75rem 0 1.25rem; max-width: 60ch; }
+  dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .9rem 1.25rem; margin: 0 0 1.25rem; }
+  dt { color: var(--slate); font-size: .85rem; }
+  dd { margin: 0; font-weight: 700; }
+  .raw { margin: 0; padding-top: 1rem; border-top: 1px solid var(--line); font: .95rem/1.6 "B612 Mono", ui-monospace, monospace;
+         overflow-wrap: anywhere; }
+  .raw span { display: block; color: var(--slate); font: .85rem "B612", system-ui, sans-serif; }
+
+  .VFR { --cat: var(--vfr); } .MVFR { --cat: var(--mvfr); } .IFR { --cat: var(--ifr); } .LIFR { --cat: var(--lifr); }
 </style>
+</head>
+<body>
+<main>
+  <h1>METAR Reader</h1>
+  <form>
+    <label for="code">Airport code</label>
+    <input id="code" name="code" placeholder="KHIO" value="{{ code }}" maxlength="5"
+           autocomplete="off" autocapitalize="characters" spellcheck="false" autofocus>
+    <button type="submit">Get weather</button>
+  </form>
 
-<h1>METAR Reader</h1>
-<form>
-  <input name="code" placeholder="e.g. KHIO" value="{{ code }}" maxlength="5" autofocus>
-  <button type="submit">Get weather</button>
-</form>
+  {% if error %}
+    <p class="error" role="alert">{{ error }}</p>
+  {% endif %}
 
-{% if error %}
-  <p class="error">{{ error }}</p>
-{% endif %}
-
-{% if result %}
-  <p class="plain">{{ result.plain }}</p>
-  <p class="raw">{{ result.code }}: {{ result.raw }}</p>
-{% endif %}
+  {% if result %}
+    <section class="report {{ result.cat or '' }}" aria-label="Weather at {{ result.code }}">
+      <h2>{{ result.name or result.code }}{% if result.cat %} <span class="cat">{{ result.cat }}</span>{% endif %}</h2>
+      <p class="plain">{{ result.plain }}</p>
+      <dl>
+        {% for label, value in result.facts %}
+          <div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>
+        {% endfor %}
+      </dl>
+      <p class="raw"><span>Raw report</span>{{ result.raw }}</p>
+    </section>
+  {% endif %}
+</main>
+</body>
+</html>
